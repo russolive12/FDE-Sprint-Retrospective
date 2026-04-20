@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sprint Retro Board</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+<style>
+/* ── RESET & TOKENS ─────────────────────────────────────────────── */
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --ink:#0e0e10;
+  --ink2:#3a3a42;
+  --ink3:#7a7a88;
+  --ink4:#b0b0bc;
+  --paper:#f7f6f2;
+  --paper2:#eeede8;
+  --paper3:#e2e0d8;
+  --rule:#d4d2ca;
+
+  --well:       #1e4620; --well-mid:#2d6e32; --well-bg:#eef7ee; --well-rule:#a8d5aa;
+  --bad:        #5c1515; --bad-mid: #8b2020; --bad-bg: #fdf0f0; --bad-rule: #e8aaaa;
+  --improve:    #5c3800; --imp-mid: #8b5800; --imp-bg: #fdf6ee; --imp-rule: #e8cc90;
+  --same:       #0d3060; --same-mid:#1a52a0; --same-bg:#eef4fd; --same-rule:#90b8e8;
+
+  --fac:#2d1a6e; --fac-bg:#f0eeff; --fac-rule:#b0a0e8;
+
+  --radius:10px;
+  --shadow: 0 1px 3px rgba(0,0,0,.06), 0 4px 12px rgba(0,0,0,.06);
+  --shadow-lg: 0 4px 8px rgba(0,0,0,.08), 0 12px 32px rgba(0,0,0,.1);
+}
+
+html,body{height:100%;background:var(--paper);color:var(--ink);font-family:'Lato',sans-serif;overflow:hidden;display:flex;flex-direction:column;}
+
+/* ── TOPBAR ─────────────────────────────────────────────────────── */
+.topbar{
+  display:flex;align-items:center;gap:12px;
+  padding:0 20px;height:56px;flex-shrink:0;
+  background:#fff;border-bottom:1px solid var(--rule);
+  box-shadow:0 1px 0 var(--rule);
+}
+.logo{font-family:'Syne',sans-serif;font-weight:800;font-size:16px;letter-spacing:-.5px;color:var(--ink);white-space:nowrap;}
+.logo em{color:var(--ink4);font-style:normal;}
+.tb-sep{width:1px;height:22px;background:var(--rule);flex-shrink:0;}
+.chip{
+  font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:500;
+  padding:3px 10px;border-radius:20px;
+  border:1px solid var(--rule);background:var(--paper);color:var(--ink3);
+  white-space:nowrap;
+}
+.chip.live{background:#eef7ee;border-color:var(--well-rule);color:var(--well);}
+.chip.live .dot{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--well-mid);margin-right:5px;animation:blink 2s infinite;}
+.chip.ai{background:var(--fac-bg);border-color:var(--fac-rule);color:var(--fac);}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:.3;}}
+.tb-right{margin-left:auto;display:flex;align-items:center;gap:8px;}
+.btn{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:7px 14px;border-radius:8px;font-size:12px;font-family:'Lato',sans-serif;font-weight:700;letter-spacing:.3px;
+  cursor:pointer;border:1px solid var(--rule);background:#fff;color:var(--ink);
+  transition:all .15s;white-space:nowrap;
+}
+.btn:hover{background:var(--paper);border-color:var(--ink4);}
+.btn svg{width:13px;height:13px;flex-shrink:0;stroke:currentColor;}
+.btn-primary{background:var(--ink);color:#fff;border-color:var(--ink);}
+.btn-primary:hover{background:var(--ink2);}
+.btn-fac{background:var(--fac-bg);border-color:var(--fac-rule);color:var(--fac);}
+.btn-fac:hover{background:#e4dcff;}
+.btn-danger{background:#fdf0f0;border-color:var(--bad-rule);color:var(--bad);}
+.btn-danger:hover{background:#fce0e0;}
+.btn-sm{padding:5px 10px;font-size:11px;}
+
+/* ── SYNCBAR ────────────────────────────────────────────────────── */
+.syncbar{
+  padding:5px 20px;font-size:11px;font-family:'IBM Plex Mono',monospace;
+  background:var(--paper2);border-bottom:1px solid var(--rule);
+  color:var(--ink3);flex-shrink:0;min-height:28px;display:flex;align-items:center;gap:8px;
+  transition:all .3s;
+}
+.syncbar.ok{background:#eef7ee;color:var(--well);border-color:var(--well-rule);}
+.syncbar.err{background:#fdf0f0;color:var(--bad);border-color:var(--bad-rule);}
+.syncbar.warn{background:#fdf6ee;color:var(--improve);border-color:var(--imp-rule);}
+
+/* ── FILTERBAR ──────────────────────────────────────────────────── */
+.filterbar{
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  padding:8px 20px;background:#fff;border-bottom:1px solid var(--rule);flex-shrink:0;
+}
+.flabel{font-size:10px;font-family:'IBM Plex Mono',monospace;font-weight:500;color:var(--ink4);text-transform:uppercase;letter-spacing:.08em;margin-right:2px;}
+.ftag{
+  font-size:11px;font-weight:700;font-family:'Lato',sans-serif;
+  padding:4px 12px;border-radius:20px;
+  border:1px solid var(--rule);background:var(--paper);color:var(--ink3);
+  cursor:pointer;transition:all .15s;white-space:nowrap;
+}
+.ftag:hover{border-color:var(--ink4);}
+.ftag.well.on{ background:var(--well-bg); border-color:var(--well-rule); color:var(--well);}
+.ftag.bad.on{  background:var(--bad-bg);  border-color:var(--bad-rule);  color:var(--bad);}
+.ftag.imp.on{  background:var(--imp-bg);  border-color:var(--imp-rule);  color:var(--improve);}
+.ftag.same.on{ background:var(--same-bg); border-color:var(--same-rule); color:var(--same);}
+.ftag.sub.on{  background:var(--fac-bg);  border-color:var(--fac-rule);  color:var(--fac);}
+.f-sep{width:1px;height:16px;background:var(--rule);flex-shrink:0;}
+.sort-wrap{display:flex;align-items:center;gap:6px;margin-left:auto;}
+.sort-sel{
+  font-size:11px;font-family:'IBM Plex Mono',monospace;
+  padding:4px 8px;border-radius:6px;border:1px solid var(--rule);
+  background:var(--paper);color:var(--ink3);cursor:pointer;
+}
+
+/* ── BOARD ──────────────────────────────────────────────────────── */
+.board{display:grid;grid-template-columns:1fr 1fr;flex:1;overflow:hidden;gap:0;}
+.col{display:flex;flex-direction:column;overflow:hidden;border-right:1px solid var(--rule);}
+.col:last-child{border-right:none;}
+.col:nth-child(1),.col:nth-child(2){border-bottom:1px solid var(--rule);}
+
+.col-head{
+  display:flex;align-items:center;gap:8px;
+  padding:10px 16px 9px;flex-shrink:0;
+  border-bottom:1px solid var(--rule);
+}
+.col-pip{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+.col-title{font-family:'Syne',sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;}
+.col-n{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--ink4);margin-left:auto;}
+
+.well .col-pip{background:var(--well-mid);}  .well .col-title{color:var(--well);}
+.bad  .col-pip{background:var(--bad-mid);}   .bad  .col-title{color:var(--bad);}
+.imp  .col-pip{background:var(--imp-mid);}   .imp  .col-title{color:var(--improve);}
+.same .col-pip{background:var(--same-mid);}  .same .col-title{color:var(--same);}
+
+.notes{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px;}
+.notes::-webkit-scrollbar{width:3px;}
+.notes::-webkit-scrollbar-thumb{background:var(--rule);border-radius:2px;}
+
+/* ── NOTE CARD ──────────────────────────────────────────────────── */
+.note{
+  border-radius:var(--radius);
+  padding:12px 13px 10px;
+  font-size:12.5px;line-height:1.55;
+  border:1px solid transparent;
+  box-shadow:var(--shadow);
+  transition:opacity .2s,box-shadow .15s;
+  position:relative;
+}
+.note:hover{box-shadow:var(--shadow-lg);}
+.note.out{opacity:.08;pointer-events:none;}
+
+.well .note{ background:var(--well-bg); border-color:var(--well-rule); color:var(--well);}
+.bad  .note{ background:var(--bad-bg);  border-color:var(--bad-rule);  color:var(--bad);}
+.imp  .note{ background:var(--imp-bg);  border-color:var(--imp-rule);  color:var(--improve);}
+.same .note{ background:var(--same-bg); border-color:var(--same-rule); color:var(--same);}
+
+.note-text{word-break:break-word;margin-bottom:7px;}
+.note-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:6px;}
+.note-author{font-size:10px;font-family:'IBM Plex Mono',monospace;opacity:.55;font-style:italic;}
+.note-sub{
+  font-size:9px;font-family:'IBM Plex Mono',monospace;font-weight:500;
+  padding:2px 7px;border-radius:10px;
+  background:rgba(0,0,0,.06);
+  text-transform:uppercase;letter-spacing:.04em;opacity:.8;
+}
+.note-foot{display:flex;align-items:center;gap:6px;}
+.vote-btn{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:4px 10px;border-radius:6px;font-size:11px;font-family:'IBM Plex Mono',monospace;font-weight:500;
+  border:1px solid rgba(0,0,0,.12);background:rgba(0,0,0,.04);
+  color:inherit;cursor:pointer;transition:all .15s;
+}
+.vote-btn:hover{background:rgba(0,0,0,.1);}
+.vote-btn.voted{background:rgba(0,0,0,.14);border-color:rgba(0,0,0,.25);font-weight:700;}
+.vote-btn svg{width:10px;height:10px;stroke:currentColor;}
+.vote-n{font-size:12px;}
+.del-btn{
+  margin-left:auto;background:none;border:none;
+  color:inherit;opacity:.2;cursor:pointer;
+  padding:3px 5px;border-radius:4px;font-size:14px;line-height:1;
+  transition:opacity .15s;
+}
+.del-btn:hover{opacity:.6;}
+
+/* ai loading dots */
+.dots{display:inline-flex;gap:3px;align-items:center;}
+.dots span{width:4px;height:4px;border-radius:50%;background:currentColor;opacity:.25;animation:dot 1s infinite;}
+.dots span:nth-child(2){animation-delay:.2s;}
+.dots span:nth-child(3){animation-delay:.4s;}
+@keyframes dot{0%,100%{opacity:.25;}50%{opacity:.9;}}
+
+/* ── OVERLAY / MODAL ────────────────────────────────────────────── */
+.overlay{
+  display:none;position:fixed;inset:0;
+  background:rgba(14,14,16,.55);z-index:300;
+  align-items:center;justify-content:center;
+  backdrop-filter:blur(6px);
+}
+.overlay.on{display:flex;}
+.modal{
+  background:#fff;border:1px solid var(--rule);border-radius:16px;
+  padding:28px;width:520px;max-width:96vw;max-height:92vh;overflow-y:auto;
+  box-shadow:var(--shadow-lg);
+}
+.modal h2{font-family:'Syne',sans-serif;font-size:18px;font-weight:700;margin-bottom:6px;color:var(--ink);}
+.modal-sub{font-size:12px;color:var(--ink3);line-height:1.7;margin-bottom:20px;}
+.mf{margin-bottom:14px;}
+.mf label{display:block;font-size:10px;font-family:'IBM Plex Mono',monospace;font-weight:500;color:var(--ink4);margin-bottom:5px;text-transform:uppercase;letter-spacing:.06em;}
+.mf input,.mf textarea,.mf select{
+  width:100%;font-size:13px;font-family:'Lato',sans-serif;
+  padding:9px 12px;border-radius:8px;border:1px solid var(--rule);
+  background:var(--paper);color:var(--ink);resize:vertical;
+}
+.mf textarea{min-height:72px;}
+.mf input:focus,.mf textarea:focus,.mf select:focus{outline:none;border-color:var(--ink3);}
+.modal-row{display:flex;gap:8px;margin-top:18px;}
+.msg{font-size:11px;margin-top:10px;padding:8px 12px;border-radius:7px;display:none;}
+.msg.on{display:block;}
+.msg.ok{background:var(--well-bg);color:var(--well);border:1px solid var(--well-rule);}
+.msg.err{background:var(--bad-bg);color:var(--bad);border:1px solid var(--bad-rule);}
+.msg.info{background:var(--fac-bg);color:var(--fac);border:1px solid var(--fac-rule);}
+
+/* ── SETUP MODAL SPECIFICS ──────────────────────────────────────── */
+.setup-steps{display:flex;flex-direction:column;gap:16px;margin:16px 0;}
+.sstep{display:flex;gap:14px;align-items:flex-start;}
+.sstep-n{
+  width:26px;height:26px;border-radius:50%;flex-shrink:0;
+  background:var(--ink);color:#fff;
+  font-family:'Syne',sans-serif;font-size:12px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;margin-top:1px;
+}
+.sstep-body{font-size:12.5px;color:var(--ink2);line-height:1.7;}
+.sstep-body strong{color:var(--ink);font-weight:700;}
+.sstep-body code{
+  font-family:'IBM Plex Mono',monospace;font-size:11px;
+  background:var(--paper2);padding:1px 6px;border-radius:4px;color:var(--fac);
+}
+.setup-div{height:1px;background:var(--rule);margin:16px 0;}
+.setup-notice{
+  background:var(--fac-bg);border:1px solid var(--fac-rule);border-radius:8px;
+  padding:12px 14px;font-size:12px;color:var(--fac);line-height:1.6;margin-bottom:16px;
+}
+.setup-notice strong{font-weight:700;}
+
+/* ── DROP ZONE ──────────────────────────────────────────────────── */
+.dropzone{
+  border:2px dashed var(--rule);border-radius:10px;padding:32px;
+  text-align:center;color:var(--ink3);font-size:12.5px;
+  cursor:pointer;transition:all .15s;margin-bottom:12px;
+}
+.dropzone:hover,.dropzone.over{border-color:var(--fac-rule);color:var(--fac);background:var(--fac-bg);}
+.dropzone input{display:none;}
+.dropzone-icon{font-size:30px;margin-bottom:8px;}
+
+/* ── FAC MODE BANNER ────────────────────────────────────────────── */
+.fac-banner{
+  display:none;
+  background:var(--fac-bg);border-bottom:1px solid var(--fac-rule);
+  padding:6px 20px;font-size:11px;font-family:'IBM Plex Mono',monospace;
+  color:var(--fac);flex-shrink:0;align-items:center;gap:8px;
+}
+.fac-banner.on{display:flex;}
+</style>
+</head>
+<body>
+
+<!-- ══ TOPBAR ══════════════════════════════════════════════════════ -->
+<div class="topbar">
+  <div class="logo">retro<em>/board</em></div>
+  <div class="tb-sep"></div>
+  <span class="chip" id="chip-notes">0 notes</span>
+  <span class="chip live" id="chip-live" style="display:none"><span class="dot"></span>Live</span>
+  <span class="chip ai"   id="chip-ai"   style="display:none">✦ AI tagged</span>
+  <div class="tb-right">
+    <button class="btn btn-sm btn-fac" id="btn-fac" onclick="toggleFac()">
+      <svg viewBox="0 0 16 16" fill="none" stroke-width="1.8"><circle cx="8" cy="6" r="3"/><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>
+      Facilitator mode
+    </button>
+    <button class="btn btn-sm" id="btn-add" onclick="openAdd()" style="display:none">
+      <svg viewBox="0 0 16 16" fill="none" stroke-width="1.8"><path d="M8 3v10M3 8h10"/></svg>
+      Add note
+    </button>
+    <button class="btn btn-sm btn-primary" id="btn-import" onclick="openImport()" style="display:none">
+      <svg viewBox="0 0 16 16" fill="none" stroke-width="1.8"><path d="M2 11v2a1 1 0 001 1h10a1 1 0 001-1v-2M8 3v7M5 6l3-3 3 3"/></svg>
+      Import Excel
+    </button>
+    <button class="btn btn-sm btn-danger" id="btn-clear" onclick="clearBoard()" style="display:none">
+      <svg viewBox="0 0 16 16" fill="none" stroke-width="1.8"><path d="M3 3l10 10M13 3L3 13"/></svg>
+      Clear
+    </button>
+  </div>
+</div>
+
+<!-- ══ FAC BANNER ══════════════════════════════════════════════════ -->
+<div class="fac-banner" id="fac-banner">
+  ✦ Facilitator mode active — you can add notes, import Excel, and clear the board
+  <button class="btn btn-sm" style="margin-left:auto;font-size:10px;" onclick="toggleFac()">Exit</button>
+</div>
+
+<!-- ══ SYNCBAR ══════════════════════════════════════════════════════ -->
+<div class="syncbar" id="syncbar">Connecting…</div>
+
+<!-- ══ FILTERBAR ════════════════════════════════════════════════════ -->
+<div class="filterbar">
+  <span class="flabel">Theme</span>
+  <button class="ftag well on" data-t="well" onclick="toggleTheme('well',this)">✦ Went Well</button>
+  <button class="ftag bad  on" data-t="bad"  onclick="toggleTheme('bad',this)">✦ Didn't Go Well</button>
+  <button class="ftag imp  on" data-t="imp"  onclick="toggleTheme('imp',this)">✦ Could Improve</button>
+  <button class="ftag same on" data-t="same" onclick="toggleTheme('same',this)">✦ Keep Same</button>
+  <div class="f-sep"></div>
+  <span class="flabel">Topic</span>
+  <div id="subtags" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+  <div class="sort-wrap">
+    <span class="flabel">Sort</span>
+    <select class="sort-sel" id="sort-sel" onchange="sortMode=this.value;render()">
+      <option value="age">Default</option>
+      <option value="votes-d">Most votes ↓</option>
+      <option value="votes-a">Fewest votes ↑</option>
+    </select>
+  </div>
+</div>
+
+<!-- ══ BOARD ════════════════════════════════════════════════════════ -->
+<div class="board">
+  <div class="col well">
+    <div class="col-head"><span class="col-pip"></span><span class="col-title">What Went Well</span><span class="col-n" id="cn-well"></span></div>
+    <div class="notes" id="n-well"></div>
+  </div>
+  <div class="col bad">
+    <div class="col-head"><span class="col-pip"></span><span class="col-title">What Didn't Go Well</span><span class="col-n" id="cn-bad"></span></div>
+    <div class="notes" id="n-bad"></div>
+  </div>
+  <div class="col imp">
+    <div class="col-head"><span class="col-pip"></span><span class="col-title">Could Be Improved</span><span class="col-n" id="cn-imp"></span></div>
+    <div class="notes" id="n-imp"></div>
+  </div>
+  <div class="col same">
+    <div class="col-head"><span class="col-pip"></span><span class="col-title">Keep the Same</span><span class="col-n" id="cn-same"></span></div>
+    <div class="notes" id="n-same"></div>
+  </div>
+</div>
+
+<!-- ══ SETUP MODAL ══════════════════════════════════════════════════ -->
+<div class="overlay on" id="ov-setup">
+<div class="modal">
+  <h2>Connect your database</h2>
+  <p class="modal-sub">Paste your Supabase credentials below. This is a one-time step — after saving, anyone who opens this page will be live instantly with no extra setup.</p>
+
+  <div class="setup-notice">
+    <strong>Don't have Supabase yet?</strong> Follow the 4 steps below first — it takes about 5 minutes and is completely free. No credit card needed.
+  </div>
+
+  <div class="setup-steps">
+    <div class="sstep"><div class="sstep-n">1</div><div class="sstep-body">Go to <strong>supabase.com</strong> → click <strong>Start your project</strong> → sign in with GitHub or email.</div></div>
+    <div class="sstep"><div class="sstep-n">2</div><div class="sstep-body">Click <strong>New project</strong>. Give it any name (e.g. <code>retro-board</code>). Choose the region closest to your team. Set a database password and click <strong>Create new project</strong>. Wait ~1 minute for it to spin up.</div></div>
+    <div class="sstep"><div class="sstep-n">3</div><div class="sstep-body">In your project, go to the <strong>SQL Editor</strong> (left sidebar). Paste and run this SQL to create the two tables:<br><br>
+<code style="display:block;white-space:pre;margin-top:8px;padding:10px;background:#f5f4f0;border-radius:6px;font-size:10px;line-height:1.6;overflow-x:auto;">create table notes (
+  id uuid primary key default gen_random_uuid(),
+  text text not null,
+  theme text not null,
+  subcat text default '',
+  author text default '',
+  created_at timestamptz default now()
+);
+create table votes (
+  id uuid primary key default gen_random_uuid(),
+  note_id uuid references notes(id) on delete cascade,
+  voter_id text not null,
+  unique(note_id, voter_id)
+);
+alter table notes enable row level security;
+alter table votes enable row level security;
+create policy "public read notes"  on notes for select using (true);
+create policy "public write notes" on notes for insert with check (true);
+create policy "public delete notes" on notes for delete using (true);
+create policy "public update notes" on notes for update using (true);
+create policy "public read votes"  on votes for select using (true);
+create policy "public write votes" on votes for insert with check (true);
+create policy "public delete votes" on votes for delete using (true);</code></div></div>
+    <div class="sstep"><div class="sstep-n">4</div><div class="sstep-body">Go to <strong>Project Settings → API</strong>. Copy the <strong>Project URL</strong> and the <strong>anon public</strong> key. Paste them below.</div></div>
+  </div>
+
+  <div class="setup-div"></div>
+  <div class="mf"><label>Supabase Project URL</label><input type="text" id="cfg-url" placeholder="https://xxxxxxxxxxxx.supabase.co"></div>
+  <div class="mf"><label>Supabase anon public key</label><input type="text" id="cfg-key" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."></div>
+  <div class="modal-row">
+    <button class="btn btn-primary" onclick="saveConfig()">Save &amp; connect</button>
+  </div>
+  <div class="msg" id="setup-msg"></div>
+</div>
+</div>
+
+<!-- ══ ADD NOTE MODAL ════════════════════════════════════════════════ -->
+<div class="overlay" id="ov-add">
+<div class="modal">
+  <h2>Add a note</h2>
+  <div class="mf"><label>Note</label><textarea id="add-text" rows="3" placeholder="What's on your mind?"></textarea></div>
+  <div class="mf">
+    <label>Theme</label>
+    <select id="add-theme">
+      <option value="well">What Went Well</option>
+      <option value="bad">What Didn't Go Well</option>
+      <option value="imp">Could Be Improved</option>
+      <option value="same">Keep the Same</option>
+    </select>
+  </div>
+  <div class="mf"><label>Your name (optional)</label><input type="text" id="add-author" placeholder="e.g. Jordan"></div>
+  <div class="modal-row">
+    <button class="btn btn-primary" onclick="submitAdd()">Add note</button>
+    <button class="btn" onclick="closeAdd()">Cancel</button>
+  </div>
+  <div class="msg" id="add-msg"></div>
+</div>
+</div>
+
+<!-- ══ IMPORT MODAL ══════════════════════════════════════════════════ -->
+<div class="overlay" id="ov-import">
+<div class="modal">
+  <h2>Import Excel responses</h2>
+  <p class="modal-sub">Upload the completed Sprint Retro Form. Each row becomes a set of sticky notes — one per answered question. The AI will auto-tag each note with a topic category.</p>
+  <div class="dropzone" id="dropzone"
+    onclick="document.getElementById('file-inp').click()"
+    ondragover="event.preventDefault()"
+    ondragenter="this.classList.add('over')"
+    ondragleave="this.classList.remove('over')"
+    ondrop="handleDrop(event)">
+    <input type="file" id="file-inp" accept=".xlsx,.xls,.csv" onchange="handleFile(this)">
+    <div class="dropzone-icon">📊</div>
+    <div>Drop your .xlsx here, or click to browse</div>
+    <div style="margin-top:4px;font-size:10px;font-family:'IBM Plex Mono',monospace;color:var(--ink4)">.xlsx · .xls · .csv</div>
+  </div>
+  <div id="import-status" style="font-size:12px;color:var(--ink3);min-height:18px;"></div>
+  <div class="modal-row"><button class="btn" onclick="closeImport()">Close</button></div>
+</div>
+</div>
+
+<!-- ══ SCRIPTS ════════════════════════════════════════════════════════ -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+'use strict';
+
+// ── CONFIG ──────────────────────────────────────────────────────────
+const CFG_KEY   = 'retro-cfg-v1';
+const VOTER_KEY = 'retro-voter-v1';
+let SB_URL = '', SB_KEY = '';
+
+function myVoterId(){
+  let v = localStorage.getItem(VOTER_KEY);
+  if(!v){v='v-'+crypto.randomUUID(); localStorage.setItem(VOTER_KEY,v);}
+  return v;
+}
+const ME = myVoterId();
+
+function loadCfg(){
+  try{const c=JSON.parse(localStorage.getItem(CFG_KEY)||'{}'); SB_URL=c.url||''; SB_KEY=c.key||'';}catch(e){}
+}
+function saveCfg(url,key){
+  SB_URL=url; SB_KEY=key;
+  localStorage.setItem(CFG_KEY,JSON.stringify({url,key}));
+}
+
+// ── SUPABASE REST ────────────────────────────────────────────────────
+function sbHeaders(extra={}){
+  return {'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,...extra};
+}
+async function sbGet(table,select='*',filter=''){
+  const url=`${SB_URL}/rest/v1/${table}?select=${select}${filter?'&'+filter:''}`;
+  const r=await fetch(url,{headers:sbHeaders({'Prefer':'return=representation'})});
+  if(!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+async function sbInsert(table,body){
+  const r=await fetch(`${SB_URL}/rest/v1/${table}`,{method:'POST',headers:sbHeaders({'Prefer':'return=representation'}),body:JSON.stringify(body)});
+  if(!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+async function sbUpdate(table,filter,body){
+  const r=await fetch(`${SB_URL}/rest/v1/${table}?${filter}`,{method:'PATCH',headers:sbHeaders({'Prefer':'return=representation'}),body:JSON.stringify(body)});
+  if(!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+async function sbDelete(table,filter){
+  const r=await fetch(`${SB_URL}/rest/v1/${table}?${filter}`,{method:'DELETE',headers:sbHeaders()});
+  if(!r.ok) throw new Error(await r.text());
+}
+
+// ── REALTIME ─────────────────────────────────────────────────────────
+let ws=null;
+function connectRealtime(){
+  if(!SB_URL||!SB_KEY) return;
+  const wsUrl=SB_URL.replace('https://','wss://').replace('http://','ws://')+'/realtime/v1/websocket?apikey='+SB_KEY+'&vsn=1.0.0';
+  ws=new WebSocket(wsUrl);
+  ws.onopen=()=>{
+    // Subscribe to both tables
+    ['notes','votes'].forEach(t=>{
+      ws.send(JSON.stringify({topic:`realtime:public:${t}`,event:'phx_join',payload:{},ref:t}));
+    });
+    setSyncBar('ok','● Live — changes appear instantly for everyone');
+    document.getElementById('chip-live').style.display='';
+  };
+  ws.onmessage=e=>{
+    try{
+      const msg=JSON.parse(e.data);
+      if(msg.event==='postgres_changes'||msg.payload?.data?.type){
+        // Any DB change → re-fetch
+        fetchAll();
+      }
+    }catch(_){}
+  };
+  ws.onclose=()=>{
+    document.getElementById('chip-live').style.display='none';
+    setSyncBar('warn','Reconnecting…');
+    setTimeout(connectRealtime,3000);
+  };
+  ws.onerror=()=>ws.close();
+}
+
+// ── STATE ─────────────────────────────────────────────────────────────
+let notes=[];      // [{id, text, theme, subcat, author, created_at, votes:[voter_id,...]}]
+let allSubs=new Set();
+let activeSubs=new Set();
+let activeThemes=new Set(['well','bad','imp','same']);
+let sortMode='age';
+let facMode=false;
+
+// ── FETCH & MERGE ─────────────────────────────────────────────────────
+async function fetchAll(){
+  if(!SB_URL) return;
+  try{
+    const [rawNotes, rawVotes] = await Promise.all([
+      sbGet('notes','*','order=created_at.asc'),
+      sbGet('votes','note_id,voter_id')
+    ]);
+    // Build vote map
+    const vmap={};
+    rawVotes.forEach(v=>{
+      if(!vmap[v.note_id]) vmap[v.note_id]=[];
+      vmap[v.note_id].push(v.voter_id);
+    });
+    notes=rawNotes.map(n=>({...n, votes:vmap[n.id]||[]}));
+    notes.forEach(n=>{if(n.subcat)allSubs.add(n.subcat);});
+    render();
+    document.getElementById('chip-notes').textContent=notes.length+' note'+(notes.length!==1?'s':'');
+  }catch(e){
+    setSyncBar('err','Fetch error: '+e.message);
+  }
+}
+
+// ── RENDER ────────────────────────────────────────────────────────────
+function render(){
+  ['well','bad','imp','same'].forEach(t=>{
+    const area=document.getElementById('n-'+t);
+    area.innerHTML='';
+    let list=notes.filter(n=>n.theme===t);
+    if(sortMode==='votes-d') list.sort((a,b)=>b.votes.length-a.votes.length);
+    if(sortMode==='votes-a') list.sort((a,b)=>a.votes.length-b.votes.length);
+    list.forEach(n=>area.appendChild(makeCard(n)));
+    const vis=list.filter(n=>!isOut(n)).length;
+    document.getElementById('cn-'+t).textContent=vis+(vis!==list.length?'/'+list.length:'');
+  });
+  document.getElementById('chip-notes').textContent=notes.length+' note'+(notes.length!==1?'s':'');
+  renderSubs();
+}
+
+function isOut(n){
+  if(!activeThemes.has(n.theme)) return true;
+  if(activeSubs.size>0&&!activeSubs.has(n.subcat)) return true;
+  return false;
+}
+
+function makeCard(n){
+  const div=document.createElement('div');
+  div.className='note'+(isOut(n)?' out':'');
+  const voted=n.votes.includes(ME);
+  div.innerHTML=`
+    <div class="note-text">${esc(n.text)}</div>
+    <div class="note-meta">
+      ${n.author?`<span class="note-author">${esc(n.author)}</span>`:''}
+      ${n.subcatLoading?`<span class="note-sub"><span class="dots"><span></span><span></span><span></span></span></span>`:n.subcat?`<span class="note-sub">${esc(n.subcat)}</span>`:''}
+    </div>
+    <div class="note-foot">
+      <button class="vote-btn${voted?' voted':''}" onclick="castVote('${n.id}',${voted})">
+        <svg viewBox="0 0 12 12" fill="none" stroke-width="2"><path d="M6 10V2M2 6l4-4 4 4"/></svg>
+        <span class="vote-n">${n.votes.length||''}</span>
+      </button>
+      ${facMode?`<button class="del-btn" onclick="delNote('${n.id}')" title="Delete">×</button>`:''}
+    </div>`;
+  return div;
+}
+
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+// ── VOTING ────────────────────────────────────────────────────────────
+async function castVote(noteId, alreadyVoted){
+  // Optimistic update
+  const n=notes.find(x=>x.id===noteId); if(!n) return;
+  if(alreadyVoted){
+    n.votes=n.votes.filter(v=>v!==ME);
+    render();
+    await sbDelete('votes',`note_id=eq.${noteId}&voter_id=eq.${ME}`).catch(()=>{});
+  } else {
+    n.votes=[...n.votes, ME];
+    render();
+    await sbInsert('votes',{note_id:noteId,voter_id:ME}).catch(()=>{});
+  }
+}
+
+// ── ADD NOTE ──────────────────────────────────────────────────────────
+function openAdd(){document.getElementById('ov-add').classList.add('on');setTimeout(()=>document.getElementById('add-text').focus(),80);}
+function closeAdd(){document.getElementById('ov-add').classList.remove('on');}
+
+async function submitAdd(){
+  const text=document.getElementById('add-text').value.trim();
+  const theme=document.getElementById('add-theme').value;
+  const author=document.getElementById('add-author').value.trim();
+  if(!text){showMsg('add-msg','err','Please enter some text.');return;}
+  showMsg('add-msg','info','Saving…');
+  try{
+    const [row]=await sbInsert('notes',{text,theme,subcat:'',author});
+    closeAdd();
+    document.getElementById('add-text').value='';
+    document.getElementById('add-author').value='';
+    showMsg('add-msg','','');
+    // Classify in background
+    classifyOne({...row,votes:[],subcatLoading:true});
+    fetchAll();
+  }catch(e){showMsg('add-msg','err','Error: '+e.message);}
+}
+
+// ── DELETE NOTE ───────────────────────────────────────────────────────
+async function delNote(id){
+  if(!confirm('Delete this note?')) return;
+  await sbDelete('notes','id=eq.'+id).catch(()=>{});
+  fetchAll();
+}
+
+// ── CLEAR BOARD ───────────────────────────────────────────────────────
+async function clearBoard(){
+  if(!confirm('Delete ALL notes from the board? This cannot be undone.')) return;
+  // Delete all notes (votes cascade)
+  await sbDelete('notes','id=neq.00000000-0000-0000-0000-000000000000').catch(()=>{});
+  notes=[]; allSubs=new Set(); activeSubs=new Set();
+  document.getElementById('subtags').innerHTML='';
+  document.getElementById('chip-ai').style.display='none';
+  render();
+}
+
+// ── AI CLASSIFY ───────────────────────────────────────────────────────
+const SUBCATS=['Communication','Testing','Process','Planning','Technical Debt','Collaboration','Tooling','Delivery','Product Quality','Documentation','Team Morale','Scope & Requirements','Deployment','Code Review','Other'];
+
+async function classifyOne(note){
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',max_tokens:30,
+        system:`You classify sprint retrospective notes. Reply with ONLY one sub-category name from this list — nothing else:\n${SUBCATS.join(', ')}`,
+        messages:[{role:'user',content:`Theme: ${note.theme}\nNote: "${note.text}"`}]
+      })
+    });
+    const d=await r.json();
+    const raw=(d.content?.[0]?.text||'').trim().replace(/[.\n"]/g,'');
+    const sub=SUBCATS.find(s=>s.toLowerCase()===raw.toLowerCase())||'Other';
+    await sbUpdate('notes','id=eq.'+note.id,{subcat:sub}).catch(()=>{});
+    allSubs.add(sub);
+    fetchAll();
+    document.getElementById('chip-ai').style.display='';
+  }catch(_){}
+}
+
+async function classifyBatch(newNotes){
+  document.getElementById('chip-ai').style.display='';
+  const CHUNK=4;
+  for(let i=0;i<newNotes.length;i+=CHUNK){
+    await Promise.all(newNotes.slice(i,i+CHUNK).map(n=>classifyOne(n)));
+  }
+}
+
+// ── EXCEL IMPORT ──────────────────────────────────────────────────────
+const COL_THEME={
+  'pride':'well','went well':'well','processes':'well',
+  "didn't":'bad','friction':'bad','handoff':'bad','slowed':'bad',
+  'improve':'imp','change':'imp','tools':'imp','actions':'imp','topics':'imp','facilitator':'imp',
+  'keep same':'same','remain':'same','protect':'same',
+  'rating':'same','quality':'same','collab':'same'
+};
+function themeOf(h){
+  const l=h.toLowerCase();
+  for(const[k,v] of Object.entries(COL_THEME)) if(l.includes(k)) return v;
+  return 'imp';
+}
+
+function openImport(){document.getElementById('ov-import').classList.add('on');}
+function closeImport(){document.getElementById('ov-import').classList.remove('on');}
+function handleDrop(e){e.preventDefault();document.getElementById('dropzone').classList.remove('over');if(e.dataTransfer.files[0])processFile(e.dataTransfer.files[0]);}
+function handleFile(inp){if(inp.files[0])processFile(inp.files[0]);}
+
+async function processFile(file){
+  const status=document.getElementById('import-status');
+  status.textContent='⏳ Reading file…';
+  try{
+    const buf=await file.arrayBuffer();
+    let rows;
+    if(file.name.endsWith('.csv')){
+      const text=new TextDecoder().decode(buf);
+      const lines=text.trim().split('\n');
+      const headers=lines[0].split(',').map(h=>h.replace(/^"|"$/g,'').trim());
+      rows=lines.slice(1).map(l=>{const v=l.split(',').map(c=>c.replace(/^"|"$/g,'').trim()),o={};headers.forEach((h,i)=>o[h]=v[i]||'');return o;});
+    } else {
+      const wb=XLSX.read(buf,{type:'array'});
+      const sn=wb.SheetNames.find(s=>s.toLowerCase().includes('response'))||wb.SheetNames[0];
+      rows=XLSX.utils.sheet_to_json(wb.Sheets[sn],{defval:''});
+    }
+    if(!rows?.length){status.textContent='❌ No data rows found.';return;}
+
+    const SKIP=['Name','name','Role / Team','Role','Team','role'];
+    const toInsert=[];
+    rows.forEach(row=>{
+      const author=row['Name']||row['name']||row['Your Name']||'';
+      Object.entries(row).forEach(([h,raw])=>{
+        if(SKIP.includes(h)) return;
+        const val=String(raw||'').trim();
+        if(!val||val==='0') return;
+        let text=val;
+        if(/rating|quality|collab/i.test(h)&&/^[1-5]$/.test(val)) text=h.replace(/^Rating — /,'')+': '+val+'/5';
+        toInsert.push({text,theme:themeOf(h),subcat:'',author});
+      });
+    });
+
+    if(!toInsert.length){status.textContent='❌ No filled cells found.';return;}
+    status.textContent=`⏳ Saving ${toInsert.length} notes…`;
+
+    // Insert in batches of 20
+    const BATCH=20; const inserted=[];
+    for(let i=0;i<toInsert.length;i+=BATCH){
+      const batch=await sbInsert('notes',toInsert.slice(i,i+BATCH));
+      inserted.push(...batch);
+    }
+    status.textContent=`✓ ${inserted.length} notes saved. AI tagging in background…`;
+    closeImport();
+    fetchAll();
+    classifyBatch(inserted.map(n=>({...n,votes:[]})));
+  }catch(e){status.textContent='❌ '+e.message;}
+}
+
+// ── FILTERS ───────────────────────────────────────────────────────────
+function toggleTheme(t,btn){
+  if(activeThemes.has(t))activeThemes.delete(t);else activeThemes.add(t);
+  btn.classList.toggle('on'); render();
+}
+function renderSubs(){
+  const c=document.getElementById('subtags');
+  const existing=new Set([...c.querySelectorAll('.ftag')].map(b=>b.dataset.s));
+  allSubs.forEach(s=>{
+    if(existing.has(s)) return;
+    const b=document.createElement('button');
+    b.className='ftag sub'+(activeSubs.size===0||activeSubs.has(s)?' on':'');
+    b.dataset.s=s; b.textContent=s;
+    b.onclick=()=>toggleSub(s,b); c.appendChild(b);
+  });
+}
+function toggleSub(s,btn){
+  if(activeSubs.size===0){
+    activeSubs=new Set([s]);
+    document.querySelectorAll('#subtags .ftag').forEach(b=>b.classList.toggle('on',b.dataset.s===s));
+  } else if(activeSubs.has(s)){
+    activeSubs.delete(s); btn.classList.remove('on');
+    if(activeSubs.size===0) document.querySelectorAll('#subtags .ftag').forEach(b=>b.classList.add('on'));
+  } else { activeSubs.add(s); btn.classList.add('on'); }
+  render();
+}
+
+// ── FACILITATOR MODE ──────────────────────────────────────────────────
+function toggleFac(){
+  facMode=!facMode;
+  document.getElementById('fac-banner').classList.toggle('on',facMode);
+  document.getElementById('btn-fac').textContent=facMode?'Exit facilitator mode':'Facilitator mode';
+  ['btn-add','btn-import','btn-clear'].forEach(id=>{
+    document.getElementById(id).style.display=facMode?'':'none';
+  });
+  render();
+}
+
+// ── SETUP MODAL ───────────────────────────────────────────────────────
+async function saveConfig(){
+  const url=document.getElementById('cfg-url').value.trim().replace(/\/+$/,'');
+  const key=document.getElementById('cfg-key').value.trim();
+  if(!url||!key){showMsg('setup-msg','err','Please fill in both fields.');return;}
+  showMsg('setup-msg','info','Testing connection…');
+  try{
+    // Quick test
+    const r=await fetch(`${url}/rest/v1/notes?limit=1`,{headers:{'apikey':key,'Authorization':'Bearer '+key}});
+    if(!r.ok) throw new Error('HTTP '+r.status+' — check your URL and key, and make sure you ran the SQL in Step 3.');
+    saveCfg(url,key);
+    showMsg('setup-msg','ok','✓ Connected! Loading board…');
+    setTimeout(()=>{
+      document.getElementById('ov-setup').classList.remove('on');
+      showMsg('setup-msg','','');
+      init();
+    },900);
+  }catch(e){
+    showMsg('setup-msg','err','Could not connect: '+e.message);
+  }
+}
+
+// ── UTILITIES ─────────────────────────────────────────────────────────
+function setSyncBar(state,msg){
+  const b=document.getElementById('syncbar');
+  b.className='syncbar'+(state?' '+state:'');
+  b.textContent=msg;
+}
+function showMsg(id,type,text){
+  const el=document.getElementById(id);
+  el.className='msg'+(type?' on '+type:'');
+  el.textContent=text;
+}
+
+// ── BOOT ──────────────────────────────────────────────────────────────
+function init(){
+  if(!SB_URL||!SB_KEY){
+    setSyncBar('warn','Not connected — click Save & connect to set up your database');
+    document.getElementById('ov-setup').classList.add('on');
+    return;
+  }
+  setSyncBar('','Connecting…');
+  fetchAll();
+  connectRealtime();
+  // Fallback poll every 10s in case WS drops
+  setInterval(fetchAll,10000);
+}
+
+loadCfg();
+if(SB_URL&&SB_KEY){
+  document.getElementById('ov-setup').classList.remove('on');
+  init();
+} else {
+  setSyncBar('warn','Setup required — paste your Supabase credentials to get started');
+}
+</script>
+</body>
+</html>
